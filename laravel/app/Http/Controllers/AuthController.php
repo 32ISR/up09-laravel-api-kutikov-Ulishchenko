@@ -24,5 +24,42 @@ class AuthController extends Controller
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            "token" => $token,
+            "user" => $user,
+            "token_type" => "Bearer"
+        ], 201);
+    }
+
+    public function login(Request $request): JsonResponse
+    {
+            $data = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+        $user = User::where('email', $data['email'])->first();
+        // 40
+        if (!$user || !Hash::check($data['password'], $user->password)) {
+
+            return response()->json([
+                'message' => 'Неправильный логин или пароль',
+            ], 401);
+        }
+        $token = $user->createToken('auth_token')->plainTextToken;
+        return response()->json([
+            'access_token' => $token,
+            'user' => $user,
+            'token_type' => "Bearer"
+        ], 200);
+    
+
+
+    }
+    public function logout(Request $request):  JsonResponse
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json(["message" => "Ссесия закончена"], 200);
     }
 }
